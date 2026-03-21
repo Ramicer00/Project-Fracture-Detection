@@ -1,0 +1,29 @@
+path: ./data/GRAZPEDWRI-DX
+train: images/train
+val: images/valid
+test: images/test
+
+nc: 9
+names:
+  0: boneanomaly
+  1: bonelesion
+  2: foreignbody
+  3: fracture
+  4: metal
+  5: periostealreaction
+  6: pronatorsign
+  7: softtissue
+  8: text
+
+# Class weights para focal loss (inversamente proporcional a frecuencia)
+# Calculados sobre el split de entrenamiento
+class_weights:
+  boneanomaly: 3.2
+  bonelesion: 4.1
+  foreignbody: 5.8
+  fracture: 1.0      # clase más frecuente → peso base
+  metal: 6.3
+  periostealreaction: 3.7
+  pronatorsign: 2.9
+  softtissue: 4.5
+  text: 1.8
