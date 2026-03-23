@@ -14,7 +14,6 @@ usando YOLOv11 y RT-DETR. Proyecto de portfolio de Computer Vision aplicado a sa
 - Anotaciones en formato YOLO (bounding boxes)  
 - Split oficial: 80% train / 10% val / 10% test
 
-Kaggle: [cokane53/grazpedwri-dx](https://www.kaggle.com/datasets/cokane53/grazpedwri-dx)
 
 ---
 
@@ -22,7 +21,7 @@ Kaggle: [cokane53/grazpedwri-dx](https://www.kaggle.com/datasets/cokane53/grazpe
 
 ```
 fracture-detection/
-├── app.py                   # Demo Gradio (portfolio / HuggingFace Spaces)
+├── app.py                   # Demo
 ├── requirements.txt
 ├── config/
 │   └── dataset.yaml         # Config YOLO con paths y class weights
@@ -32,10 +31,8 @@ fracture-detection/
 │   ├── evaluate.py          # Evaluación exhaustiva + figuras
 │   ├── predict.py           # Inferencia + Grad-CAM + export ONNX
 │   └── benchmark.py         # Benchmark YOLOv11 vs RT-DETR
-├── data/
-│   └── GRAZPEDWRI-DX/       # Dataset descargado automáticamente
-├── runs/                    # Checkpoints y logs de Ultralytics
-└── reports/                 # Figuras y CSVs de EDA y evaluación
+└── data/                    # Dataset
+
 ```
 
 ---
@@ -51,34 +48,11 @@ python -m venv venv && source venv/bin/activate
 # 2. Instalar dependencias
 pip install -r requirements.txt
 
-# 3. Configurar Kaggle API
-mkdir -p ~/.kaggle
-cp kaggle.json ~/.kaggle/
-chmod 600 ~/.kaggle/kaggle.json
 ```
 
 ---
 
-## Pipeline paso a paso
-
-### 1. EDA y preparación del dataset
-
-```bash
-python src/prepare_dataset.py
-```
-
-Genera en `reports/eda/`:
-- `class_distribution.png` — distribución de clases + desglose por split
-- `bbox_sizes.png` — tamaño de bboxes por clase (detectar small objects)
-- `bbox_heatmaps.png` — distribución espacial de centros de anotación
-- `annotation_summary.csv` — estadísticas descriptivas
-
-**Hallazgo clave del EDA:** La clase `fracture` domina (~40% de anotaciones).
-Las clases `foreignbody` y `metal` son muy infrecuentes → focal loss esencial.
-
----
-
-### 2. Entrenamiento
+### Entrenamiento
 
 ```bash
 # Baseline con YOLOv11m
@@ -112,12 +86,9 @@ Cada run loggea automáticamente losses, mAP por época, lr schedule y el mejor 
 | yolo11m  | 20.1M  | ~0.72          | ~15     |
 | yolo11l  | 25.3M  | ~0.74          | ~10     |
 
-Para portfolio: empezar con `yolo11m`, luego benchmark con `yolo11n` para demostrar
-el trade-off precisión/velocidad.
-
 ---
 
-### 3. Evaluación
+### Evaluación
 
 ```bash
 python src/evaluate.py \
@@ -125,11 +96,6 @@ python src/evaluate.py \
     --split test
 ```
 
-Genera en `reports/eval/`:
-- `per_class_ap.png` — AP50 y AP50-95 por clase
-- `pr_curves.png` — curvas Precision-Recall por clase
-- `confusion_matrix.png` — matriz de confusión normalizada
-- `per_class_metrics.csv` — tabla exportable
 
 **Métricas de referencia (GRAZPEDWRI-DX, YOLOv11m):**
 
@@ -144,7 +110,7 @@ Genera en `reports/eval/`:
 
 ---
 
-### 4. Inferencia y Grad-CAM
+### Inferencia y Grad-CAM
 
 ```bash
 # Predicción simple
@@ -166,7 +132,7 @@ python src/predict.py \
 
 ---
 
-### 5. Benchmark YOLOv11 vs RT-DETR
+### Benchmark YOLOv11 vs RT-DETR
 
 ```bash
 # Entrenar RT-DETR primero
@@ -183,30 +149,12 @@ python src/benchmark.py \
 
 ---
 
-### 6. Demo interactiva
+### Demo interactiva
 
 ```bash
 python app.py
 # → Abre en http://localhost:7860
 ```
-
-Para publicar en HuggingFace Spaces (gratis):
-1. Crear Space nuevo → Gradio
-2. Subir `app.py`, `requirements.txt` y `best.pt`
-3. En `app.py` cambiar `MODEL_PATH` al path relativo dentro del Space
-
----
-
-## Puntos de diferenciación del portfolio
-
-| Aspecto | Implementación |
-|---------|---------------|
-| Imbalance de clases | `label_smoothing=0.1` + augmentation Mosaic/MixUp |
-| Augmentation médico | Pipeline albumentations con CLAHE + noise específico de RX |
-| Explainability | EigenCAM sobre backbone → muestra qué zona de la fractura activa el modelo |
-| Benchmark | YOLOv11 vs RT-DETR: precisión vs velocidad en mismo dataset |
-| Deploy | ONNX export + demo Gradio publicada en HuggingFace Spaces |
-| Tracking | WandB con métricas por época + artefactos |
 
 ---
 
@@ -219,8 +167,6 @@ Para publicar en HuggingFace Spaces (gratis):
       con pseudo-labels generados por el modelo
 - [ ] **Análisis clínico:** comparar errores del modelo con tasa de error
       humana reportada en el paper original del dataset
-- [ ] **Paper técnico:** escribir reporte en formato MICCAI describiendo
-      resultados, limitaciones y trabajo futuro
 
 ---
 
